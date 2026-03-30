@@ -1,0 +1,7 @@
+out/
+*.class
+.DS_Store
+*.iml
+.idea/
+.vscode/
+lab1.pdf
