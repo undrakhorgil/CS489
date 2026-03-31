@@ -6,7 +6,7 @@
 
     <groupId>edu.miu.cs.cs489appsd</groupId>
     <artifactId>lab2b</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
     <name>CS489 Lab2b - PAMS CLI</name>
 
     <properties>
