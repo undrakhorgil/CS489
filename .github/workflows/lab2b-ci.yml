@@ -48,6 +48,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            lab2b/target/lab2b-1.0.0.jar
+            lab2b/target/lab2b-*.jar
           generate_release_notes: true
 
