@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: ads
+
+server:
+  port: 8080
+
+logging:
+  level:
+    edu.miu.cs.cs489appsd.ads: INFO
