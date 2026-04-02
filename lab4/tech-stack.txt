@@ -1,0 +1,16 @@
+Advantis Dental Surgeries (ADS) — chosen technology stack
+=========================================================
+
+Implementation stack (aligned with the CS489 ADS Spring Boot project):
+
+- Runtime / language: Java 21
+- Application framework: Spring Boot 3.x
+- Web API: Spring Web (REST), Bean Validation
+- Security: Spring Security (role-based access for Office Manager, Dentist, Patient)
+- Persistence: Spring Data JPA with a relational database (e.g. PostgreSQL) for production; in-memory stores acceptable for early prototypes
+- Email: SMTP integration (e.g. JavaMail / Spring Mail) or a transactional email provider for appointment confirmations
+- Client: Web browser; HTML/CSS/JavaScript front end (could be server-rendered templates or a SPA calling the REST API)
+- Build: Maven
+- Deployment (typical): JVM on a cloud VM or container (Docker), behind HTTPS reverse proxy / load balancer
+
+Rationale: Spring Boot gives a mature, maintainable stack for enterprise web apps, clear layering (web → services → persistence), and straightforward integration for security, validation, and email—matching the lab problem’s roles, appointments, billing rules, and notifications.
