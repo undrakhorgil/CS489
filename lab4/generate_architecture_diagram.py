@@ -1,21 +1,32 @@
 #!/usr/bin/env python3
-"""Generate ads-system-architecture.png for Lab 4. Run: .venv/bin/python generate_architecture_diagram.py"""
+"""
+Generate ads-system-architecture.png in the style of lab4/sample.png
+(logical tiers + layers with physical tiers on the left).
+Run: .venv/bin/python generate_architecture_diagram.py
+"""
 
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-W, H = 1600, 1200
+W, H = 2000, 1500
 OUT = Path(__file__).resolve().parent / "ads-system-architecture.png"
 
-# Colors
+# Sample-style palette: cream panels, dark borders
 WHITE = (255, 255, 255)
-BOX_FILL = (232, 244, 252)
-BOX_EDGE = (21, 101, 160)
-TEXT = (30, 30, 30)
-TITLE = (20, 40, 80)
-ARROW = (60, 60, 60)
-LAYER_LABEL = (50, 50, 50)
+CREAM = (255, 252, 240)
+PANEL = (248, 246, 235)
+SIDEBAR = (235, 235, 242)
+BORDER = (40, 40, 40)
+TEXT = (20, 20, 20)
+TITLE = (0, 0, 80)
+ARROW = (50, 50, 50)
+ARROW_THICK = (30, 30, 30)
+MUTED = (70, 70, 70)
+
+SIDEBAR_W = 140
+MAIN_X0 = SIDEBAR_W + 24
+MAIN_X1 = W - 32
 
 
 def load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -33,7 +44,16 @@ def load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     return ImageFont.load_default()
 
 
-def wrap_lines(text: str, font: ImageFont.ImageFont, draw: ImageDraw.ImageDraw, max_width: int) -> list[str]:
+def text_width(draw: ImageDraw.ImageDraw, s: str, font: ImageFont.ImageFont) -> float:
+    if hasattr(draw, "textlength"):
+        return float(draw.textlength(s, font=font))
+    bbox = draw.textbbox((0, 0), s, font=font)
+    return float(bbox[2] - bbox[0])
+
+
+def wrap_lines(
+    text: str, font: ImageFont.ImageFont, draw: ImageDraw.ImageDraw, max_width: int
+) -> list[str]:
     lines: list[str] = []
     for paragraph in text.split("\n"):
         words = paragraph.split()
@@ -43,7 +63,7 @@ def wrap_lines(text: str, font: ImageFont.ImageFont, draw: ImageDraw.ImageDraw, 
         current: list[str] = []
         for w in words:
             trial = " ".join(current + [w])
-            if draw.textlength(trial, font=font) <= max_width or not current:
+            if text_width(draw, trial, font) <= max_width or not current:
                 current.append(w)
             else:
                 lines.append(" ".join(current))
@@ -53,177 +73,305 @@ def wrap_lines(text: str, font: ImageFont.ImageFont, draw: ImageDraw.ImageDraw, 
     return lines
 
 
-def draw_box(
+def draw_round_rect(
     draw: ImageDraw.ImageDraw,
     xy: tuple[int, int, int, int],
-    lines: list[str],
+    fill: tuple[int, int, int],
+    outline: tuple[int, int, int] = BORDER,
+    width: int = 2,
+    radius: int = 6,
+) -> None:
+    draw.rounded_rectangle(list(xy), radius=radius, fill=fill, outline=outline, width=width)
+
+
+def draw_text_block(
+    draw: ImageDraw.ImageDraw,
+    xy: tuple[int, int, int, int],
+    text: str,
     font: ImageFont.ImageFont,
-    padding: int = 12,
+    pad: int = 10,
 ) -> None:
     x0, y0, x1, y1 = xy
-    draw.rounded_rectangle([x0, y0, x1, y1], radius=10, fill=BOX_FILL, outline=BOX_EDGE, width=2)
-    max_w = (x1 - x0) - 2 * padding
-    y = y0 + padding
+    mw = (x1 - x0) - 2 * pad
+    lines = wrap_lines(text, font, draw, mw)
+    y = y0 + pad
     for line in lines:
-        draw.text((x0 + padding, y), line, fill=TEXT, font=font)
-        y += int(font.size * 1.15)
+        draw.text((x0 + pad, y), line, fill=TEXT, font=font)
+        y += int(font.size * 1.12)
 
 
-def box_lines(label: str, font: ImageFont.ImageFont, draw: ImageDraw.ImageDraw, w: int) -> list[str]:
-    return wrap_lines(label, font, draw, max_width=w - 24)
+def measure_block_height(
+    draw: ImageDraw.ImageDraw, text: str, font: ImageFont.ImageFont, width: int, pad: int
+) -> int:
+    lines = wrap_lines(text, font, draw, width - 2 * pad)
+    return pad * 2 + int(len(lines) * font.size * 1.12)
 
 
-def measure_box_height(lines: list[str], font: ImageFont.ImageFont, padding: int) -> int:
-    return padding * 2 + int(len(lines) * font.size * 1.15)
+def arrow_v(
+    draw: ImageDraw.ImageDraw,
+    x: int,
+    y0: int,
+    y1: int,
+    width: int = 2,
+    head: int = 10,
+) -> None:
+    ya, yb = (y0, y1) if y0 < y1 else (y1, y0)
+    draw.line([(x, ya), (x, yb)], fill=ARROW, width=width)
+    draw.polygon([(x, yb), (x - 7, yb - head), (x + 7, yb - head)], fill=ARROW)
 
 
-def arrow_v(draw: ImageDraw.ImageDraw, x: int, y_top: int, y_bot: int) -> None:
-    draw.line([(x, y_top), (x, y_bot)], fill=ARROW, width=2)
-    # arrow head
-    draw.polygon([(x, y_bot), (x - 6, y_bot - 10), (x + 6, y_bot - 10)], fill=ARROW)
+def arrow_h(
+    draw: ImageDraw.ImageDraw,
+    x0: int,
+    x1: int,
+    y: int,
+    width: int = 2,
+    double: bool = False,
+) -> None:
+    xa, xb = (x0, x1) if x0 < x1 else (x1, x0)
+    draw.line([(xa, y), (xb, y)], fill=ARROW, width=width)
+    draw.polygon([(xb, y), (xb - 12, y - 7), (xb - 12, y + 7)], fill=ARROW)
+    if double:
+        draw.polygon([(xa, y), (xa + 12, y - 7), (xa + 12, y + 7)], fill=ARROW)
 
 
-def arrow_h(draw: ImageDraw.ImageDraw, x0: int, x1: int, y: int) -> None:
-    x_start, x_end = (x0, x1) if x0 < x1 else (x1, x0)
-    draw.line([(x_start, y), (x_end, y)], fill=ARROW, width=2)
-    draw.polygon([(x_end, y), (x_end - 10, y - 6), (x_end - 10, y + 6)], fill=ARROW)
+def cloud(draw: ImageDraw.ImageDraw, cx: int, cy: int, w: int = 50, h: int = 22) -> None:
+    """Small decorative cloud between physical tiers."""
+    ovals = [(-18, -4, 10, 12), (-6, -8, 18, 10), (6, -4, 26, 12), (-10, 4, 14, 18)]
+    for ox0, oy0, ox1, oy1 in ovals:
+        draw.ellipse([cx + ox0, cy + oy0, cx + ox1, cy + oy1], outline=MUTED, width=1)
 
 
 def main() -> None:
     img = Image.new("RGB", (W, H), WHITE)
     draw = ImageDraw.Draw(img)
-    font_title = load_font(22)
-    font_l = load_font(13)
-    font_s = load_font(12)
-    font_xs = load_font(11)
 
-    draw.text((W // 2, 28), "ADS — System architecture (high level)", fill=TITLE, font=font_title, anchor="mt")
+    f_title = load_font(24)
+    f_sec = load_font(15)
+    f_body = load_font(13)
+    f_small = load_font(11)
+    f_phy = load_font(12)
 
-    # Layer column
-    lx = 24
-    for ly, lbl in [
-        (118, "Client tier"),
-        (298, "Presentation"),
-        (498, "Application / domain"),
-        (738, "Data & integration"),
-    ]:
-        draw.text((lx, ly), lbl, fill=LAYER_LABEL, font=font_s, anchor="lm")
+    # Sidebar — physical tiers
+    draw.rectangle([0, 0, SIDEBAR_W, H], fill=SIDEBAR, outline=BORDER, width=1)
+    # Three zones
+    z1, z2, z3 = 80, 520, 980
+    draw.line([(0, z2), (SIDEBAR_W, z2)], fill=BORDER, width=1)
+    draw.line([(0, z3), (SIDEBAR_W, z3)], fill=BORDER, width=1)
 
-    # Row Y positions (tuned for layout)
-    y_client = 88
-    y_pres = 268
-    y_app = 468
-    y_data = 708
+    draw.text((SIDEBAR_W // 2, z1 // 2 + 20), "Physical", fill=TITLE, font=f_phy, anchor="mm")
+    draw.text((SIDEBAR_W // 2, z1 // 2 + 42), "tiers", fill=TITLE, font=f_phy, anchor="mm")
 
-    bw1, bw2, bw3 = 480, 480, 480
-    gap = 40
-    x0 = 200
-    x1 = x0 + bw1 + gap
-    x2 = x1 + bw2 + gap
+    # Simple tier glyphs (monitor / server / disks as text boxes)
+    draw_round_rect(draw, (12, z1 + 30, SIDEBAR_W - 12, z1 + 120), CREAM)
+    draw_text_block(draw, (12, z1 + 30, SIDEBAR_W - 12, z1 + 120), "Client\nTier\n(Web browser)", f_small)
 
-    # Clients
-    c_specs = [
-        (x0, "Office Manager browser\nRegister dentists & patients,\nbook appointments"),
-        (x1, "Dentist portal\nView appointments & patient details"),
-        (x2, "Patient portal & public form\nView, cancel, reschedule,\nrequest appointments"),
-    ]
-    ch = 0
-    for x, text in c_specs:
-        lines = box_lines(text, font_s, draw, bw1)
-        h = measure_box_height(lines, font_s, 12)
-        ch = max(ch, h)
-    for x, text in c_specs:
-        lines = box_lines(text, font_s, draw, bw1)
-        draw_box(draw, (x, y_client, x + bw1, y_client + ch), lines, font_s)
+    cloud(draw, SIDEBAR_W // 2, z2 - 8)
 
-    # Presentation (single box: security wraps controllers)
-    pw = 1240
-    px0 = 200
-    p_lines = box_lines(
-        "Presentation layer — Spring Security (filter chain, roles: OFFICE_MANAGER, DENTIST, PATIENT)\n"
-        "+ Spring Web REST controllers (Office, Dentist, Patient routes)",
-        font_s,
+    draw_round_rect(draw, (12, z2 + 20, SIDEBAR_W - 12, z2 + 200), CREAM)
+    draw_text_block(
         draw,
-        pw,
+        (12, z2 + 20, SIDEBAR_W - 12, z2 + 200),
+        "Middle\nTier\n JVM\nSpring Boot",
+        f_small,
     )
-    ph = measure_box_height(p_lines, font_s, 12)
-    draw_box(draw, (px0, y_pres, px0 + pw, y_pres + ph), p_lines, font_s)
 
-    # Application row
-    aw = 360
-    ag = 28
-    ax0 = 200
-    apps = [
-        "Registration service\n(dentists, patients)",
-        "Appointment service\nbooking, reschedule, cancel;\nmax 5 appointments/\ndentist/week",
-        "Billing service\nblock new requests if\nunpaid bill outstanding",
-        "Email notification\nservice (confirmations)",
-    ]
-    ax = ax0
-    app_boxes: list[tuple[int, int, int, int]] = []
-    max_ah = 0
-    for label in apps:
-        lines = box_lines(label, font_xs, draw, aw)
-        ah = measure_box_height(lines, font_xs, 10)
-        max_ah = max(max_ah, ah)
-        app_boxes.append((ax, y_app, ax + aw, y_app + ah))
-        ax += aw + ag
-    ax = ax0
-    for label in apps:
-        lines = box_lines(label, font_xs, draw, aw)
-        draw_box(draw, (ax, y_app, ax + aw, y_app + max_ah), lines, font_xs)
-        ax += aw + ag
+    cloud(draw, SIDEBAR_W // 2, z3 - 8)
 
-    # Data row
-    dw1, dw2, dw3 = 520, 400, 420
-    dx0, dx1, dx2 = 200, 200 + dw1 + 36, 200 + dw1 + 36 + dw2 + 36
-    d1 = box_lines(
-        "Repository layer\nDentist, Patient, Surgery,\nAppointment, Bill, Account",
-        font_s,
+    draw_round_rect(draw, (12, z3 + 20, SIDEBAR_W - 12, H - 40), CREAM)
+    draw_text_block(draw, (12, z3 + 20, SIDEBAR_W - 12, H - 40), "Data\nTier\n DB +\nSMTP", f_small)
+
+    # Title
+    draw.text(
+        ((MAIN_X0 + MAIN_X1) // 2, 36),
+        "Logical tiers and layers — ADS (Advantis Dental Surgeries)",
+        fill=TITLE,
+        font=f_title,
+        anchor="mt",
+    )
+
+    y = 88
+
+    # --- Client logical tier ---
+    client_outer = (MAIN_X0, y, MAIN_X1, y + 200)
+    draw_round_rect(draw, client_outer, PANEL)
+    draw.text((MAIN_X0 + 12, y + 8), "Client / browser (logical)", fill=TITLE, font=f_sec)
+
+    cw = (MAIN_X1 - MAIN_X0 - 48) // 2
+    cx1, cx2 = MAIN_X0 + 16, MAIN_X0 + 24 + cw
+    cy = y + 38
+    ch = 150
+    draw_round_rect(draw, (cx1, cy, cx1 + cw - 8, cy + ch), CREAM)
+    draw_text_block(
         draw,
-        dw1,
+        (cx1, cy, cx1 + cw - 8, cy + ch),
+        "Rich HTML, CSS (Bootstrap),\nJavaScript — Office Manager,\nDentist & Patient portals",
+        f_body,
     )
-    d2 = box_lines("Relational DB\n(e.g. PostgreSQL)", font_s, draw, dw2)
-    d3 = box_lines("External email\nSMTP / provider", font_s, draw, dw3)
-    dh = max(
-        measure_box_height(d1, font_s, 12),
-        measure_box_height(d2, font_s, 12),
-        measure_box_height(d3, font_s, 12),
+    draw_round_rect(draw, (cx2 + 8, cy, cx2 + cw, cy + ch), CREAM)
+    draw_text_block(
+        draw,
+        (cx2 + 8, cy, cx2 + cw, cy + ch),
+        "SPA / dynamic views\nAJAX → REST\nJSON request/response",
+        f_body,
     )
-    draw_box(draw, (dx0, y_data, dx0 + dw1, y_data + dh), d1, font_s)
-    draw_box(draw, (dx1, y_data, dx1 + dw2, y_data + dh), d2, font_s)
-    draw_box(draw, (dx2, y_data, dx2 + dw3, y_data + dh), d3, font_s)
 
-    # Arrows client -> presentation
-    mid_clients = [x0 + bw1 // 2, x1 + bw1 // 2, x2 + bw1 // 2]
-    y_c_bot = y_client + ch
-    y_p_top = y_pres
-    for mx in mid_clients:
-        arrow_v(draw, mx, y_c_bot + 4, y_p_top - 4)
+    # HTTPS annotation
+    mid_x = (MAIN_X0 + MAIN_X1) // 2
+    y_label = cy - 6
+    draw.text((mid_x, y_label), "HTTPS", fill=MUTED, font=f_small, anchor="mb")
 
-    # Presentation -> application
-    mid_pres = px0 + pw // 2
-    arrow_v(draw, mid_pres, y_pres + ph + 4, y_app - 4)
+    y_after_client = client_outer[3] + 8
 
-    # Application -> data (from middle of app row)
-    mid_app = ax0 + (4 * aw + 3 * ag) // 2
-    arrow_v(draw, mid_app, y_app + max_ah + 4, y_data - 4)
+    # Arrows from client to server
+    y_arrow_top = cy + ch
+    y_arrow_bot = y_after_client + 36
+    for x_off in (cw // 2 + cx1, cx2 + cw // 2):
+        arrow_v(draw, x_off, y_arrow_top + 4, y_arrow_bot)
 
-    # Repos -> DB
-    arrow_h(draw, dx0 + dw1 - 8, dx1 + 8, y_data + dh // 2)
+    draw.text((mid_x, y_arrow_top + 14), "REST / JSON", fill=MUTED, font=f_small, anchor="mm")
+    # Thick conceptual JSON arrow (center)
+    arrow_v(draw, mid_x, y_arrow_top + 28, y_arrow_bot - 4, width=4)
 
-    # Email service -> external (from last app box center to email external)
-    ex_mx = dx2 + dw3 // 2
-    last_app_cx = ax0 + 3 * (aw + ag) + aw // 2
-    y_mid = y_app + max_ah + (y_data - (y_app + max_ah)) // 2
-    draw.line([(last_app_cx, y_app + max_ah + 4), (last_app_cx, y_mid), (ex_mx, y_mid), (ex_mx, y_data - 4)], fill=ARROW, width=2)
-    draw.polygon([(ex_mx, y_data - 4), (ex_mx - 6, y_data - 14), (ex_mx + 6, y_data - 14)], fill=ARROW)
+    y = y_arrow_bot + 4
+
+    # --- Application server (outer) ---
+    app_top = y
+    app_bottom = 1180
+    draw_round_rect(draw, (MAIN_X0, app_top, MAIN_X1, app_bottom), PANEL)
+    draw.text((MAIN_X0 + 12, app_top + 10), "Application server — Spring Boot embedded container", fill=TITLE, font=f_sec)
+
+    inner_x0 = MAIN_X0 + 16
+    inner_x1 = MAIN_X1 - 16
+    inner_y0 = app_top + 42
+    inner_h = app_bottom - inner_y0 - 16
+    draw_round_rect(draw, (inner_x0, inner_y0, inner_x1, inner_y0 + inner_h), WHITE)
+
+    # Split: UI (left ~32%) vs REST app (right)
+    split = inner_x0 + int((inner_x1 - inner_x0) * 0.34)
+    ui_w = split - inner_x0 - 12
+    rest_x0 = split + 8
+    rest_x1 = inner_x1 - 100  # leave strip for Spring DI
+
+    # UI module
+    ui_y = inner_y0 + 12
+    ui_h = inner_h - 24
+    draw_round_rect(draw, (inner_x0 + 8, ui_y, split - 4, ui_y + ui_h), CREAM)
+    draw.text((inner_x0 + 16, ui_y + 8), "User interface (deployable unit)", fill=TITLE, font=f_small)
+    draw_text_block(
+        draw,
+        (inner_x0 + 8, ui_y + 28, split - 4, ui_y + ui_h - 8),
+        "Static + templated UI\nHTML, CSS, JS assets\n(served by Spring MVC\nor separate static host)",
+        f_body,
+    )
+
+    # REST module — three layers
+    layer_gap = 14
+    rest_w = rest_x1 - rest_x0
+    strip_w = 78
+    layer_x1 = rest_x1 - strip_w - 12
+
+    h_web = 120
+    h_bus = 200
+    h_dao = 140
+    yl = ui_y + 8
+
+    draw_round_rect(draw, (rest_x0, yl, layer_x1, yl + h_web), CREAM)
+    draw.text((rest_x0 + 10, yl + 6), "Web / API layer", fill=TITLE, font=f_small)
+    draw_text_block(
+        draw,
+        (rest_x0 + 6, yl + 26, layer_x1 - 6, yl + h_web),
+        "Spring MVC — REST controllers\nSpring Security (authZ, roles)\nOffice, Dentist, Patient APIs",
+        f_body,
+    )
+    yl += h_web + layer_gap
+
+    draw_round_rect(draw, (rest_x0, yl, layer_x1, yl + h_bus), CREAM)
+    draw.text((rest_x0 + 10, yl + 6), "Business service layer", fill=TITLE, font=f_small)
+    draw_text_block(
+        draw,
+        (rest_x0 + 6, yl + 26, layer_x1 - 6, yl + h_bus),
+        "Domain services (POJOs):\nRegistration, Appointment\n(≤5 visits/dentist/week),\nBilling (unpaid bill gate),\nEmail notification",
+        f_body,
+    )
+    yl += h_bus + layer_gap
+
+    draw_round_rect(draw, (rest_x0, yl, layer_x1, yl + h_dao), CREAM)
+    draw.text((rest_x0 + 10, yl + 6), "Data access layer", fill=TITLE, font=f_small)
+    draw_text_block(
+        draw,
+        (rest_x0 + 6, yl + 26, layer_x1 - 6, yl + h_dao),
+        "Spring Data JPA — repositories\n(Dentist, Patient, Surgery,\nAppointment, Bill, Account)",
+        f_body,
+    )
+
+    # Spring DI vertical strip
+    strip_x0 = rest_x1 - strip_w
+    draw_round_rect(draw, (strip_x0, ui_y + 8, rest_x1, ui_y + ui_h - 8), (230, 238, 248))
+    draw.text(
+        (strip_x0 + strip_w // 2, ui_y + ui_h // 2),
+        "Spring\nIoC /\nDI",
+        fill=TITLE,
+        font=f_small,
+        anchor="mm",
+    )
+
+    # Arrow UI <-> REST (same process)
+    draw.line([(split - 4, ui_y + ui_h // 2), (rest_x0, ui_y + ui_h // 2)], fill=ARROW, width=2)
+    draw.polygon(
+        [(rest_x0, ui_y + ui_h // 2), (rest_x0 - 10, ui_y + ui_h // 2 - 6), (rest_x0 - 10, ui_y + ui_h // 2 + 6)],
+        fill=ARROW,
+    )
+
+    # --- Enterprise information services (data tier) ---
+    data_y = app_bottom + 20
+    data_h = 200
+    draw_round_rect(draw, (MAIN_X0, data_y, MAIN_X1, data_y + data_h), PANEL)
+    draw.text((MAIN_X0 + 12, data_y + 10), "Enterprise information services (data & integration)", fill=TITLE, font=f_sec)
+
+    third = (MAIN_X1 - MAIN_X0 - 48) // 3
+    dx = MAIN_X0 + 16
+    dy = data_y + 44
+    box_texts = [
+        "Database\nPostgreSQL\n(relational store)",
+        "External email\nSMTP / provider\n(appointment confirmations)",
+        "Optional integrations\n(legacy EHR, billing)\n— future",
+    ]
+    for i, txt in enumerate(box_texts):
+        x0 = MAIN_X0 + 16 + i * (third + 8)
+        x1 = x0 + third - (16 if i < 2 else 8)
+        draw_round_rect(draw, (x0, dy, x1, dy + 130), CREAM)
+        draw_text_block(draw, (x0, dy, x1, dy + 130), txt, f_body)
+
+    # Double-headed vertical link app <-> data tier (like sample)
+    link_y_top = inner_y0 + inner_h - 6
+    link_y_bot = dy - 4
+    mid_link_x = (MAIN_X0 + MAIN_X1) // 2
+    draw.line([(mid_link_x, link_y_top), (mid_link_x, link_y_bot)], fill=ARROW, width=2)
+    # Arrowheads both ends
+    draw.polygon(
+        [(mid_link_x, link_y_bot), (mid_link_x - 7, link_y_bot - 12), (mid_link_x + 7, link_y_bot - 12)],
+        fill=ARROW,
+    )
+    draw.polygon(
+        [(mid_link_x, link_y_top), (mid_link_x - 7, link_y_top + 12), (mid_link_x + 7, link_y_top + 12)],
+        fill=ARROW,
+    )
+    draw.text((mid_link_x + 86, (link_y_top + link_y_bot) // 2), "JDBC / JPA", fill=MUTED, font=f_small, anchor="lm")
+
+    # SMTP from email service region to external email box
+    smtp_x = dx + third + 8 + (third - 16) // 2
+    draw.line(
+        [(layer_x1 - 40, yl + h_dao // 2), (MAIN_X1 - 120, yl + h_dao // 2), (MAIN_X1 - 120, dy + 20), (smtp_x, dy + 20)],
+        fill=ARROW,
+        width=2,
+    )
+    arrow_v(draw, smtp_x, dy + 20, dy - 2)
 
     foot = (
-        "Tech stack: Java 21, Spring Boot 3, Spring Web, Spring Security, JPA/PostgreSQL (prod), SMTP email, Maven — "
-        "Cross-cutting: validation, exception handling, logging"
+        "Stack: Java 21, Spring Boot 3, Spring Web, Spring Security, Spring Data JPA, PostgreSQL, SMTP — Maven build"
     )
-    draw.text((W // 2, H - 36), foot, fill=(80, 80, 80), font=font_xs, anchor="ms")
+    draw.text((W // 2, H - 28), foot, fill=MUTED, font=f_small, anchor="ms")
 
     img.save(OUT, format="PNG", optimize=True)
     print("Wrote", OUT)
