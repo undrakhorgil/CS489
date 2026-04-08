@@ -8,17 +8,19 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-W, H = 1800, 1200
+W, H = 2000, 1200
 OUT = Path(__file__).resolve().parent / "ads-er-diagram.png"
 
 WHITE = (255, 255, 255)
-BOX = (240, 248, 255)
-BOX2 = (255, 250, 240)
-EDGE = (30, 80, 140)
+BOX = (238, 247, 255)
+BOX2 = (255, 252, 242)
+EDGE = (25, 86, 156)
 TEXT = (20, 20, 20)
 LINE = (60, 60, 60)
 TITLE = (10, 40, 90)
 MUTED = (80, 80, 80)
+BG_DOT = (245, 245, 248)
+REL = (25, 25, 25)
 
 
 def load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -72,13 +74,18 @@ def entity(
     line_h = int(font_body.size * 1.25)
     h = pad * 2 + int(font_title.size * 1.4) + 8 + line_h * len(attrs)
     x1, y1 = x0 + w, y0 + h
-    draw.rounded_rectangle([x0, y0, x1, y1], radius=10, fill=fill, outline=EDGE, width=2)
+    draw.rounded_rectangle([x0, y0, x1, y1], radius=12, fill=fill, outline=EDGE, width=2)
     draw.text((x0 + pad, y0 + pad), title, fill=TITLE, font=font_title)
     y = y0 + pad + int(font_title.size * 1.4) + 8
     draw.line([(x0 + pad, y), (x1 - pad, y)], fill=EDGE, width=2)
     y += 8
     for a in attrs:
-        draw.text((x0 + pad, y), a, fill=TEXT, font=font_body)
+        color = TEXT
+        if a.startswith("PK "):
+            color = (9, 60, 130)
+        elif a.startswith("FK "):
+            color = (95, 50, 10)
+        draw.text((x0 + pad, y), a, fill=color, font=font_body)
         y += line_h
     return x0, y0, x1, y1
 
@@ -104,22 +111,44 @@ def crowfoot(draw: ImageDraw.ImageDraw, x: int, y: int, direction: str) -> None:
         draw.line([(x, y), (x + d, y - d)], fill=LINE, width=2)
 
 
+def one_marker(draw: ImageDraw.ImageDraw, x: int, y: int) -> None:
+    draw.ellipse([x - 5, y - 5, x + 5, y + 5], outline=LINE, width=2)
+
+
+def connect_ortho(
+    draw: ImageDraw.ImageDraw,
+    start: tuple[int, int],
+    end: tuple[int, int],
+    mid_x: int,
+    width: int = 2,
+) -> None:
+    """Orthogonal connector: start -> (mid_x,start_y) -> (mid_x,end_y) -> end."""
+    x0, y0 = start
+    x1, y1 = end
+    draw.line([(x0, y0), (mid_x, y0), (mid_x, y1), (x1, y1)], fill=LINE, width=width, joint="curve")
+
+
 def main() -> None:
     img = Image.new("RGB", (W, H), WHITE)
     draw = ImageDraw.Draw(img)
-    f_title = load_font(22)
-    f_ent = load_font(16)
+    f_title = load_font(24)
+    f_ent = load_font(18)
     f_attr = load_font(13)
     f_rel = load_font(14)
+
+    # Subtle dotted background (helps alignment and readability)
+    for y in range(0, H, 24):
+        for x in range(0, W, 24):
+            draw.ellipse([x - 1, y - 1, x + 1, y + 1], fill=BG_DOT)
 
     draw.text((W // 2, 24), "ADS — ER Diagram (Lab5a)", fill=TITLE, font=f_title, anchor="mt")
 
     # Entities
     dentist = entity(
         draw,
-        60,
+        90,
         120,
-        380,
+        420,
         "DENTIST",
         [
             "PK dentist_id",
@@ -136,9 +165,9 @@ def main() -> None:
 
     patient = entity(
         draw,
-        60,
+        90,
         560,
-        380,
+        420,
         "PATIENT",
         [
             "PK patient_id",
@@ -156,9 +185,9 @@ def main() -> None:
 
     surgery = entity(
         draw,
-        1360,
+        1490,
         120,
-        380,
+        420,
         "SURGERY",
         [
             "PK surgery_id",
@@ -173,8 +202,8 @@ def main() -> None:
 
     appointment = entity(
         draw,
-        710,
-        250,
+        790,
+        260,
         420,
         "APPOINTMENT",
         [
@@ -194,9 +223,9 @@ def main() -> None:
 
     bill = entity(
         draw,
-        1360,
-        620,
-        380,
+        1490,
+        600,
+        420,
         "BILL",
         [
             "PK bill_id",
@@ -210,45 +239,45 @@ def main() -> None:
         fill=BOX2,
     )
 
-    # Relationships (crow's foot)
-    # DENTIST 1 --- * APPOINTMENT
-    dx1 = dentist[2]
-    dy = (dentist[1] + dentist[3]) // 2
+    # Relationships (crow's foot) - orthogonal connectors for a cleaner look
     ax0 = appointment[0]
-    ay = dy
-    draw.line([(dx1, dy), (ax0, ay)], fill=LINE, width=2)
-    draw.text(((dx1 + ax0) // 2, dy - 22), "1..* schedules", fill=TEXT, font=f_rel, anchor="mm")
-    crowfoot(draw, ax0, ay, "left")
-    draw.ellipse([dx1 - 5, dy - 5, dx1 + 5, dy + 5], outline=LINE, width=2)  # 1 side marker
-
-    # PATIENT 1 --- * APPOINTMENT
-    px1 = patient[2]
-    py = (patient[1] + patient[3]) // 2
-    ay2 = py
-    draw.line([(px1, py), (ax0, ay2)], fill=LINE, width=2)
-    draw.text(((px1 + ax0) // 2, py - 22), "1..* books", fill=TEXT, font=f_rel, anchor="mm")
-    crowfoot(draw, ax0, ay2, "left")
-    draw.ellipse([px1 - 5, py - 5, px1 + 5, py + 5], outline=LINE, width=2)
-
-    # SURGERY 1 --- * APPOINTMENT
-    sx0 = surgery[0]
-    sy = (surgery[1] + surgery[3]) // 2
     ax1 = appointment[2]
-    ay3 = sy
-    draw.line([(ax1, ay3), (sx0, sy)], fill=LINE, width=2)
-    draw.text(((ax1 + sx0) // 2, sy - 22), "1..* occurs_at", fill=TEXT, font=f_rel, anchor="mm")
-    crowfoot(draw, ax1, ay3, "right")
-    draw.ellipse([sx0 - 5, sy - 5, sx0 + 5, sy + 5], outline=LINE, width=2)
 
-    # PATIENT 1 --- * BILL
-    pxm = patient[2]
-    pym = patient[1] + 40
-    bx0 = bill[0]
-    bym = bill[1] + 40
-    draw.line([(pxm, pym), (bx0, bym)], fill=LINE, width=2)
-    draw.text(((pxm + bx0) // 2, (pym + bym) // 2 - 18), "1..* has", fill=TEXT, font=f_rel, anchor="mm")
-    crowfoot(draw, bx0, bym, "left")
-    draw.ellipse([pxm - 5, pym - 5, pxm + 5, pym + 5], outline=LINE, width=2)
+    # DENTIST (1) — (0..*) APPOINTMENT
+    d_out = (dentist[2], (dentist[1] + dentist[3]) // 2)
+    a_in_d = (ax0, d_out[1])
+    connect_ortho(draw, d_out, a_in_d, mid_x=680)
+    one_marker(draw, d_out[0], d_out[1])
+    crowfoot(draw, a_in_d[0], a_in_d[1], "left")
+    draw.text((680, d_out[1] - 18), "1", fill=REL, font=f_rel, anchor="mm")
+    draw.text((ax0 - 18, d_out[1] - 18), "0..*", fill=REL, font=f_rel, anchor="mm")
+
+    # PATIENT (1) — (0..*) APPOINTMENT
+    p_out = (patient[2], (patient[1] + patient[3]) // 2)
+    a_in_p = (ax0, p_out[1])
+    connect_ortho(draw, p_out, a_in_p, mid_x=680)
+    one_marker(draw, p_out[0], p_out[1])
+    crowfoot(draw, a_in_p[0], a_in_p[1], "left")
+    draw.text((680, p_out[1] - 18), "1", fill=REL, font=f_rel, anchor="mm")
+    draw.text((ax0 - 18, p_out[1] - 18), "0..*", fill=REL, font=f_rel, anchor="mm")
+
+    # SURGERY (1) — (0..*) APPOINTMENT
+    s_out = (surgery[0], (surgery[1] + surgery[3]) // 2)
+    a_in_s = (ax1, s_out[1])
+    connect_ortho(draw, a_in_s, s_out, mid_x=1360)
+    one_marker(draw, s_out[0], s_out[1])
+    crowfoot(draw, a_in_s[0], a_in_s[1], "right")
+    draw.text((1360, s_out[1] - 18), "0..*", fill=REL, font=f_rel, anchor="mm")
+    draw.text((s_out[0] + 22, s_out[1] - 18), "1", fill=REL, font=f_rel, anchor="mm")
+
+    # PATIENT (1) — (0..*) BILL
+    p_out2 = (patient[2], patient[3] - 36)
+    b_in = (bill[0], bill[1] + 48)
+    connect_ortho(draw, p_out2, b_in, mid_x=1120)
+    one_marker(draw, p_out2[0], p_out2[1])
+    crowfoot(draw, b_in[0], b_in[1], "left")
+    draw.text((1120, p_out2[1] - 18), "1", fill=REL, font=f_rel, anchor="mm")
+    draw.text((bill[0] - 18, b_in[1] - 18), "0..*", fill=REL, font=f_rel, anchor="mm")
 
     note = (
         "Notes:\n"
@@ -256,12 +285,11 @@ def main() -> None:
         "- Business rules (handled in application layer): max 5 appointments per dentist per week; \n"
         "  block new appointment requests when a PATIENT has an unpaid BILL."
     )
-    draw.rounded_rectangle([620, 900, 1740, 1120], radius=10, fill=(250, 250, 250), outline=(120, 120, 120), width=2)
-    draw_text = ImageDraw.Draw(img)
-    y0 = 914
+    draw.rounded_rectangle([610, 905, 1910, 1140], radius=12, fill=(255, 255, 255), outline=(150, 150, 160), width=2)
+    y0 = 922
     for line in note.splitlines():
-        draw_text.text((636, y0), line, fill=MUTED, font=f_attr)
-        y0 += int(f_attr.size * 1.35)
+        draw.text((630, y0), line, fill=MUTED, font=f_attr)
+        y0 += int(f_attr.size * 1.4)
 
     img.save(OUT, format="PNG", optimize=True)
     print("Wrote", OUT)
