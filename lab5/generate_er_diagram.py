@@ -279,17 +279,7 @@ def main() -> None:
     draw.text((1120, p_out2[1] - 18), "1", fill=REL, font=f_rel, anchor="mm")
     draw.text((bill[0] - 18, b_in[1] - 18), "0..*", fill=REL, font=f_rel, anchor="mm")
 
-    note = (
-        "Notes:\n"
-        "- APPOINTMENT is the associative entity connecting PATIENT, DENTIST, and SURGERY.\n"
-        "- Business rules (handled in application layer): max 5 appointments per dentist per week; \n"
-        "  block new appointment requests when a PATIENT has an unpaid BILL."
-    )
-    draw.rounded_rectangle([610, 905, 1910, 1140], radius=12, fill=(255, 255, 255), outline=(150, 150, 160), width=2)
-    y0 = 922
-    for line in note.splitlines():
-        draw.text((630, y0), line, fill=MUTED, font=f_attr)
-        y0 += int(f_attr.size * 1.4)
+    # (Removed notes panel per request)
 
     img.save(OUT, format="PNG", optimize=True)
     print("Wrote", OUT)
