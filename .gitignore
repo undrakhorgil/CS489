@@ -1,4 +1,4 @@
 .DS_Store
-lab4/.venv/
+.venv/
 lab4/.mplconfig/
-lab5/.venv/
+target/
