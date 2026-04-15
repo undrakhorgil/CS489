@@ -1,26 +1,32 @@
 package edu.miu.cs.cs489appsd.ads.domain;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "users")
 public class Account {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Long accountId;
+
+    @Column(nullable = false, unique = true, length = 64)
     private String username;
+
+    @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
-    private Role role;
-    /** Set when role is DENTIST */
+
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id", nullable = false)
+    private RoleEntity roleEntity;
+
+    @Column(name = "dentist_id")
     private Long dentistId;
-    /** Set when role is PATIENT */
+
+    @Column(name = "patient_id")
     private Long patientId;
 
     public Account() {
-    }
-
-    public Account(Long accountId, String username, String passwordHash, Role role,
-                   Long dentistId, Long patientId) {
-        this.accountId = accountId;
-        this.username = username;
-        this.passwordHash = passwordHash;
-        this.role = role;
-        this.dentistId = dentistId;
-        this.patientId = patientId;
     }
 
     public Long getAccountId() {
@@ -47,12 +53,16 @@ public class Account {
         this.passwordHash = passwordHash;
     }
 
-    public Role getRole() {
-        return role;
+    public RoleEntity getRoleEntity() {
+        return roleEntity;
     }
 
-    public void setRole(Role role) {
-        this.role = role;
+    public void setRoleEntity(RoleEntity roleEntity) {
+        this.roleEntity = roleEntity;
+    }
+
+    public Role getRole() {
+        return roleEntity == null ? null : Role.valueOf(roleEntity.getName());
     }
 
     public Long getDentistId() {

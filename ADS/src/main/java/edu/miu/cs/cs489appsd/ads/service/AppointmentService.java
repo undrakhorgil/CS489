@@ -49,7 +49,7 @@ public class AppointmentService {
 
     public AppointmentDetailResponse requestAppointment(long patientId, AppointmentRequestDto dto) {
         ensurePatientExists(patientId);
-        if (billRepository.existsUnpaidByPatientId(patientId)) {
+        if (billRepository.existsByPatientIdAndPaidFalse(patientId)) {
             throw new BusinessRuleException("Cannot request a new appointment while an unpaid bill exists.");
         }
         ensureDentistExists(dto.dentistId());

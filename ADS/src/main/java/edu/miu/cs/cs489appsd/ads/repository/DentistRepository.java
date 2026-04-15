@@ -1,15 +1,11 @@
 package edu.miu.cs.cs489appsd.ads.repository;
 
 import edu.miu.cs.cs489appsd.ads.domain.Dentist;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
 import java.util.Optional;
 
-public interface DentistRepository {
+public interface DentistRepository extends JpaRepository<Dentist, Long> {
 
-    Dentist save(Dentist dentist);
-
-    Optional<Dentist> findById(Long dentistId);
-
-    List<Dentist> findAll();
+    Optional<Dentist> findByEmail(String email);
 }

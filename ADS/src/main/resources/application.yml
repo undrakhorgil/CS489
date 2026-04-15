@@ -5,13 +5,14 @@ spring:
     graphiql:
       enabled: true
   datasource:
-    # Docker: map container port 5432 to host (e.g. -p 5432:5432). Create DB once: CREATE DATABASE ads_db;
-    url: jdbc:postgresql://localhost:5432/ads_db
+    # Docker: map container port 5432 to host (e.g. -p 5432:5432). Create DB once: CREATE DATABASE ads_lab7b_db;
+    url: jdbc:postgresql://localhost:5432/ads_lab7b_db
     username: postgres
     password: postgres
   jpa:
     hibernate:
-      ddl-auto: update
+      # For Lab work, recreate schema to avoid migration issues on a reused DB.
+      ddl-auto: create-drop
     show-sql: false
     properties:
       hibernate:

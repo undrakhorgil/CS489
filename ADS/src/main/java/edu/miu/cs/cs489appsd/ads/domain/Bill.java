@@ -1,13 +1,28 @@
 package edu.miu.cs.cs489appsd.ads.domain;
 
+import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+@Entity
+@Table(name = "bills")
 public class Bill {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "bill_id")
     private Long billId;
+
+    @Column(name = "patient_id", nullable = false)
     private Long patientId;
+
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
+
+    @Column(name = "due_date", nullable = false)
     private LocalDate dueDate;
+
+    @Column(nullable = false)
     private boolean paid;
 
     public Bill() {

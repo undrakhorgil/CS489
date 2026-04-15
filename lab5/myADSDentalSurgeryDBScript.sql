@@ -1,13 +1,11 @@
 -- CS489 - Applied Software Development
 -- Lab5a (April 2026) - ADS Dental Surgeries database script
 --
--- RDBMS: SQLite (portable single-file relational database)
+-- RDBMS: PostgreSQL
 -- This script:
 --  - creates tables (ER model -> relational schema)
 --  - inserts dummy data
 --  - contains the required SQL queries
-
-PRAGMA foreign_keys = ON;
 
 -- ============================================================
 -- 1) Drop existing objects (safe re-run)
@@ -24,56 +22,52 @@ DROP TABLE IF EXISTS dentists;
 
 -- Dentist
 CREATE TABLE dentists (
-  dentist_id            INTEGER PRIMARY KEY,
-  first_name            TEXT NOT NULL,
-  last_name             TEXT NOT NULL,
-  contact_phone_number  TEXT NOT NULL,
-  email                 TEXT NOT NULL UNIQUE,
-  specialization        TEXT NOT NULL
+  dentist_id            BIGINT PRIMARY KEY,
+  first_name            VARCHAR(50) NOT NULL,
+  last_name             VARCHAR(50) NOT NULL,
+  contact_phone_number  VARCHAR(30) NOT NULL,
+  email                 VARCHAR(120) NOT NULL UNIQUE,
+  specialization        VARCHAR(120) NOT NULL
 );
 
 -- Patient
 CREATE TABLE patients (
-  patient_id            INTEGER PRIMARY KEY,
-  first_name            TEXT NOT NULL,
-  last_name             TEXT NOT NULL,
-  contact_phone_number  TEXT NOT NULL,
-  email                 TEXT NOT NULL UNIQUE,
-  mailing_address       TEXT NOT NULL,
-  date_of_birth         TEXT NOT NULL -- ISO date: YYYY-MM-DD
+  patient_id            BIGINT PRIMARY KEY,
+  first_name            VARCHAR(50) NOT NULL,
+  last_name             VARCHAR(50) NOT NULL,
+  contact_phone_number  VARCHAR(30) NOT NULL,
+  email                 VARCHAR(120) NOT NULL UNIQUE,
+  mailing_address       VARCHAR(200) NOT NULL,
+  date_of_birth         DATE NOT NULL
 );
 
 -- Surgery location
 CREATE TABLE surgeries (
-  surgery_id            INTEGER PRIMARY KEY,
-  name                  TEXT NOT NULL,
-  location_address      TEXT NOT NULL,
-  telephone_number      TEXT NOT NULL
+  surgery_id            BIGINT PRIMARY KEY,
+  name                  VARCHAR(120) NOT NULL,
+  location_address      VARCHAR(200) NOT NULL,
+  telephone_number      VARCHAR(30) NOT NULL
 );
 
 -- Appointment
 CREATE TABLE appointments (
-  appointment_id        INTEGER PRIMARY KEY,
-  patient_id            INTEGER NOT NULL,
-  dentist_id            INTEGER NOT NULL,
-  surgery_id            INTEGER NOT NULL,
-  start_at              TEXT NOT NULL, -- ISO datetime: YYYY-MM-DD HH:MM:SS
-  proposed_start_at     TEXT NULL,     -- optional
-  status                TEXT NOT NULL CHECK (status IN ('REQUESTED','SCHEDULED','CANCELLED','RESCHEDULE_REQUESTED','COMPLETED')),
-  channel               TEXT NOT NULL CHECK (channel IN ('PHONE','ONLINE')),
-  CONSTRAINT fk_appt_patient FOREIGN KEY (patient_id) REFERENCES patients(patient_id),
-  CONSTRAINT fk_appt_dentist  FOREIGN KEY (dentist_id) REFERENCES dentists(dentist_id),
-  CONSTRAINT fk_appt_surgery  FOREIGN KEY (surgery_id) REFERENCES surgeries(surgery_id)
+  appointment_id        BIGINT PRIMARY KEY,
+  patient_id            BIGINT NOT NULL REFERENCES patients(patient_id),
+  dentist_id            BIGINT NOT NULL REFERENCES dentists(dentist_id),
+  surgery_id            BIGINT NOT NULL REFERENCES surgeries(surgery_id),
+  start_at              TIMESTAMP NOT NULL,
+  proposed_start_at     TIMESTAMP NULL,
+  status                VARCHAR(30) NOT NULL CHECK (status IN ('REQUESTED','SCHEDULED','CANCELLED','RESCHEDULE_REQUESTED','COMPLETED')),
+  channel               VARCHAR(10) NOT NULL CHECK (channel IN ('PHONE','ONLINE'))
 );
 
 -- Bill (used by business rule "unpaid bill gate")
 CREATE TABLE bills (
-  bill_id               INTEGER PRIMARY KEY,
-  patient_id            INTEGER NOT NULL,
-  amount                NUMERIC NOT NULL,
-  due_date              TEXT NOT NULL, -- ISO date: YYYY-MM-DD
-  paid                  INTEGER NOT NULL CHECK (paid IN (0,1)),
-  CONSTRAINT fk_bill_patient FOREIGN KEY (patient_id) REFERENCES patients(patient_id)
+  bill_id               BIGINT PRIMARY KEY,
+  patient_id            BIGINT NOT NULL REFERENCES patients(patient_id),
+  amount                NUMERIC(10,2) NOT NULL,
+  due_date              DATE NOT NULL,
+  paid                  BOOLEAN NOT NULL
 );
 
 CREATE INDEX idx_appointments_dentist_id ON appointments(dentist_id);
@@ -115,10 +109,10 @@ INSERT INTO appointments (appointment_id, patient_id, dentist_id, surgery_id, st
 
 -- Bills (patient 203 has an unpaid bill)
 INSERT INTO bills (bill_id, patient_id, amount, due_date, paid) VALUES
-  (501, 201,  95.00, '2026-03-20', 1),
-  (502, 202, 120.00, '2026-03-25', 1),
-  (503, 203, 250.00, '2026-03-15', 0),
-  (504, 204,  80.00, '2026-03-30', 1);
+  (501, 201,  95.00, '2026-03-20', TRUE),
+  (502, 202, 120.00, '2026-03-25', TRUE),
+  (503, 203, 250.00, '2026-03-15', FALSE),
+  (504, 204,  80.00, '2026-03-30', TRUE);
 
 -- ============================================================
 -- 4) Required queries
@@ -184,6 +178,6 @@ FROM appointments a
 JOIN dentists d  ON d.dentist_id = a.dentist_id
 JOIN surgeries s ON s.surgery_id = a.surgery_id
 WHERE a.patient_id = 202
-  AND date(a.start_at) = '2026-04-15'
+  AND a.start_at::date = DATE '2026-04-15'
 ORDER BY a.start_at;
 

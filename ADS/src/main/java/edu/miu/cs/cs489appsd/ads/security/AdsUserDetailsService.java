@@ -18,7 +18,7 @@ public class AdsUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Account a = accountRepository.findByUsername(username)
+        Account a = accountRepository.findByUsernameIgnoreCase(username)
                 .orElseThrow(() -> new UsernameNotFoundException(username));
         return new AdsUserDetails(
                 a.getUsername(),

@@ -1,9 +1,23 @@
 package edu.miu.cs.cs489appsd.ads.domain;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "surgeries")
 public class Surgery {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "surgery_id")
     private Long surgeryId;
+
+    @Column(nullable = false, length = 120)
     private String name;
-    private String locationAddress;
+
+    @ManyToOne(cascade = CascadeType.PERSIST, optional = false, fetch = FetchType.EAGER)
+    @JoinColumn(name = "location_address_id", nullable = false)
+    private Address locationAddressEntity;
+
+    @Column(name = "telephone_number", nullable = false, length = 30)
     private String telephoneNumber;
 
     public Surgery() {
@@ -12,8 +26,16 @@ public class Surgery {
     public Surgery(Long surgeryId, String name, String locationAddress, String telephoneNumber) {
         this.surgeryId = surgeryId;
         this.name = name;
-        this.locationAddress = locationAddress;
+        this.locationAddressEntity = locationAddress == null ? null : Address.fromLine(locationAddress);
         this.telephoneNumber = telephoneNumber;
+    }
+
+    public String getLocationAddress() {
+        return locationAddressEntity == null ? null : locationAddressEntity.toDisplayLine();
+    }
+
+    public void setLocationAddress(String locationAddress) {
+        this.locationAddressEntity = locationAddress == null ? null : Address.fromLine(locationAddress);
     }
 
     public Long getSurgeryId() {
@@ -32,19 +54,19 @@ public class Surgery {
         this.name = name;
     }
 
-    public String getLocationAddress() {
-        return locationAddress;
-    }
-
-    public void setLocationAddress(String locationAddress) {
-        this.locationAddress = locationAddress;
-    }
-
     public String getTelephoneNumber() {
         return telephoneNumber;
     }
 
     public void setTelephoneNumber(String telephoneNumber) {
         this.telephoneNumber = telephoneNumber;
+    }
+
+    public Address getLocationAddressEntity() {
+        return locationAddressEntity;
+    }
+
+    public void setLocationAddressEntity(Address locationAddressEntity) {
+        this.locationAddressEntity = locationAddressEntity;
     }
 }

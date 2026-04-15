@@ -1,16 +1,38 @@
 package edu.miu.cs.cs489appsd.ads.domain;
 
+import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "appointments")
 public class Appointment {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "appointment_id")
     private Long appointmentId;
+
+    @Column(name = "patient_id", nullable = false)
     private Long patientId;
+
+    @Column(name = "dentist_id", nullable = false)
     private Long dentistId;
+
+    @Column(name = "surgery_id", nullable = false)
     private Long surgeryId;
+
+    @Column(name = "start_at", nullable = false)
     private LocalDateTime startAt;
-    /** When patient requests reschedule, proposed slot before office confirms */
+
+    @Column(name = "proposed_start_at")
     private LocalDateTime proposedStartAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
     private AppointmentStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
     private AppointmentRequestChannel channel;
 
     public Appointment() {

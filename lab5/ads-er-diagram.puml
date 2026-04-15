@@ -1,0 +1,75 @@
+@startuml
+title ADS — ER Diagram (Lab5a)
+
+' Render-friendly defaults
+hide methods
+hide stereotypes
+skinparam shadowing false
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+' Entities (modeled as PlantUML "entity" blocks)
+entity "DENTIST" as DENTIST {
+  * dentist_id : bigint <<PK>>
+  --
+  first_name : varchar(50)
+  last_name : varchar(50)
+  contact_phone_number : varchar(30)
+  email : varchar(120) {unique}
+  specialization : varchar(120)
+}
+
+entity "PATIENT" as PATIENT {
+  * patient_id : bigint <<PK>>
+  --
+  first_name : varchar(50)
+  last_name : varchar(50)
+  contact_phone_number : varchar(30)
+  email : varchar(120) {unique}
+  mailing_address : varchar(200)
+  date_of_birth : date
+}
+
+entity "SURGERY" as SURGERY {
+  * surgery_id : bigint <<PK>>
+  --
+  name : varchar(120)
+  location_address : varchar(200)
+  telephone_number : varchar(30)
+}
+
+entity "APPOINTMENT" as APPOINTMENT {
+  * appointment_id : bigint <<PK>>
+  --
+  patient_id : bigint <<FK>>
+  dentist_id : bigint <<FK>>
+  surgery_id : bigint <<FK>>
+  start_at : timestamp
+  proposed_start_at : timestamp?
+  status : varchar(30)
+  channel : varchar(10)
+}
+
+entity "BILL" as BILL {
+  * bill_id : bigint <<PK>>
+  --
+  patient_id : bigint <<FK>>
+  amount : numeric(10,2)
+  due_date : date
+  paid : boolean
+}
+
+' Relationships (crow's-foot)
+DENTIST ||--o{ APPOINTMENT : schedules
+PATIENT ||--o{ APPOINTMENT : books
+SURGERY ||--o{ APPOINTMENT : occurs_at
+PATIENT ||--o{ BILL : has
+
+note right of APPOINTMENT
+Business rules (application-level):
+- max 5 appointments per dentist per week
+- block new appointment requests if patient has unpaid bill
+end note
+
+@enduml
+
