@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>GraphiQL (Local)</title>
+    <style>
+      html, body, #graphiql { height: 100%; margin: 0; width: 100%; overflow: hidden; }
+    </style>
+
+    <script src="/webjars/react/16.14.0/umd/react.production.min.js"></script>
+    <script src="/webjars/react-dom/16.14.0/umd/react-dom.production.min.js"></script>
+
+    <link rel="stylesheet" href="/webjars/graphiql/0.11.11/graphiql.css" />
+    <script src="/webjars/graphiql/0.11.11/graphiql.js"></script>
+  </head>
+  <body>
+    <div id="graphiql">Loading...</div>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const path = params.get("path") || "/graphql";
+      const url = `${location.protocol}//${location.host}${path}`;
+
+      function graphQLFetcher(graphQLParams) {
+        return fetch(url, {
+          method: "post",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(graphQLParams),
+          credentials: "same-origin",
+        }).then((response) => response.json());
+      }
+
+      ReactDOM.render(
+        React.createElement(GraphiQL, {
+          fetcher: graphQLFetcher
+        }),
+        document.getElementById("graphiql")
+      );
+    </script>
+  </body>
+</html>
+
