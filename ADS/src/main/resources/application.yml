@@ -1,6 +1,23 @@
 spring:
   application:
     name: ads
+  graphql:
+    graphiql:
+      enabled: true
+  datasource:
+    # Docker: map container port 5432 to host (e.g. -p 5432:5432). Create DB once: CREATE DATABASE ads_db;
+    url: jdbc:postgresql://localhost:5432/ads_db
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        # Dialect is chosen from JDBC URL (PostgreSQL at runtime, H2 in tests)
+        globally_quoted_identifiers: true
 
 server:
   port: 8080

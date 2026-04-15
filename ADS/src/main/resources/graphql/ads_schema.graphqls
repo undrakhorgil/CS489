@@ -1,0 +1,143 @@
+"""
+ADS (Advantis Dental Surgeries) GraphQL Schema
+
+Launch GraphiQL at /graphiql (when app is running).
+"""
+
+scalar Date
+scalar DateTime
+scalar BigDecimal
+
+enum AppointmentStatus {
+  REQUESTED
+  BOOKED
+  RESCHEDULE_REQUESTED
+  CANCEL_REQUESTED
+  CANCELLED
+}
+
+enum AppointmentRequestChannel {
+  PHONE
+  EMAIL
+  IN_PERSON
+  WEB
+}
+
+type Patient {
+  patientId: ID!
+  firstName: String!
+  lastName: String!
+  contactPhoneNumber: String
+  email: String
+  mailingAddress: String!
+  dateOfBirth: Date!
+}
+
+type Dentist {
+  dentistId: ID!
+  firstName: String!
+  lastName: String!
+  contactPhoneNumber: String
+  email: String
+  specialization: String!
+}
+
+type Surgery {
+  surgeryId: ID!
+  name: String!
+  locationAddress: String!
+  telephoneNumber: String
+}
+
+type Bill {
+  billId: ID!
+  patientId: ID!
+  amount: BigDecimal!
+  dueDate: Date!
+  paid: Boolean!
+}
+
+type AppointmentDetail {
+  appointmentId: ID!
+  status: AppointmentStatus!
+  channel: AppointmentRequestChannel!
+  startAt: DateTime!
+  proposedStartAt: DateTime
+  dentist: Dentist!
+  patient: Patient!
+  surgery: Surgery!
+}
+
+input NewPatient {
+  firstName: String!
+  lastName: String!
+  contactPhoneNumber: String
+  email: String
+  mailingAddress: String!
+  dateOfBirth: Date!
+}
+
+input NewDentist {
+  firstName: String!
+  lastName: String!
+  contactPhoneNumber: String
+  email: String
+  specialization: String!
+}
+
+input NewSurgery {
+  name: String!
+  locationAddress: String!
+  telephoneNumber: String
+}
+
+input NewBill {
+  patientId: ID!
+  amount: BigDecimal!
+  dueDate: Date!
+  paid: Boolean!
+}
+
+input AppointmentRequestInput {
+  dentistId: ID!
+  surgeryId: ID!
+  startAt: DateTime!
+  channel: AppointmentRequestChannel!
+}
+
+input RescheduleRequestInput {
+  proposedStartAt: DateTime!
+}
+
+type Query {
+  allPatients: [Patient!]!
+  patientById(patientId: ID!): Patient
+
+  allDentists: [Dentist!]!
+  dentistById(dentistId: ID!): Dentist
+
+  allSurgeries: [Surgery!]!
+  surgeryById(surgeryId: ID!): Surgery
+
+  appointmentsForPatient(patientId: ID!): [AppointmentDetail!]!
+  appointmentsForDentist(dentistId: ID!): [AppointmentDetail!]!
+
+  billsForPatient(patientId: ID!): [Bill!]!
+}
+
+type Mutation {
+  enrollPatient(newPatient: NewPatient!): Patient!
+  registerDentist(newDentist: NewDentist!): Dentist!
+  registerSurgery(newSurgery: NewSurgery!): Surgery!
+
+  recordBill(newBill: NewBill!): Bill!
+
+  requestAppointment(patientId: ID!, request: AppointmentRequestInput!): AppointmentDetail!
+  bookAppointment(appointmentId: ID!): AppointmentDetail!
+
+  requestCancel(patientId: ID!, appointmentId: ID!): Boolean!
+  requestReschedule(patientId: ID!, appointmentId: ID!, request: RescheduleRequestInput!): Boolean!
+  confirmReschedule(appointmentId: ID!): AppointmentDetail!
+  confirmCancel(appointmentId: ID!): Boolean!
+}
+
