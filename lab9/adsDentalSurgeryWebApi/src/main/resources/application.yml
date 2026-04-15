@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: ads-lab9-web-api
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ads_lab9_db
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+
+server:
+  port: 8080
+
+ads:
+  security:
+    jwt:
+      secret: "change-me-to-a-long-random-secret-change-me-to-a-long-random-secret"
+      expires-in-seconds: 3600
+
