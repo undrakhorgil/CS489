@@ -1,0 +1,30 @@
+services:
+  postgres1:
+    image: postgres:16
+    container_name: postgres1
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ads_pgdata:/var/lib/postgresql/data
+
+  ads-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres1
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres1:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      ADS_SECURITY_JWT_SECRET: change-me-to-a-long-random-secret-change-me-to-a-long-random-secret
+    ports:
+      - "8080:8080"
+
+volumes:
+  ads_pgdata:
+

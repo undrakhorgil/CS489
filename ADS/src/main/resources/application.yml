@@ -5,11 +5,13 @@ spring:
     graphiql:
       enabled: true
   datasource:
-    # Docker: map container port 5432 to host (e.g. -p 5432:5432). Create DB once: CREATE DATABASE ads_lab7b_db;
-    url: jdbc:postgresql://localhost:5432/ads_lab7b_db
+    # Using local Docker container `postgres1` which publishes 5432 -> host 5432.
+    # We use the default `postgres` database to avoid requiring manual DB creation.
+    url: jdbc:postgresql://localhost:5432/postgres
     username: postgres
     password: postgres
   jpa:
+    open-in-view: false
     hibernate:
       # For Lab work, recreate schema to avoid migration issues on a reused DB.
       ddl-auto: create-drop
@@ -17,11 +19,18 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        # Dialect is chosen from JDBC URL (PostgreSQL at runtime, H2 in tests)
+        # Dialect is chosen from JDBC URL
         globally_quoted_identifiers: true
 
 server:
   port: 8080
+
+ads:
+  security:
+    jwt:
+      # Replace this in real deployments. For jjwt HS256, use a long secret (>= 256 bits).
+      secret: ${ADS_SECURITY_JWT_SECRET:change-me-to-a-long-random-secret-change-me-to-a-long-random-secret}
+      expires-in-seconds: 3600
 
 logging:
   level:
