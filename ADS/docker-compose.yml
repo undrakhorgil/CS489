@@ -1,30 +1,69 @@
+# ADS — full stack: postgresdb → ads-backend → ads-frontend (nginx + /api proxy).
+# Project name is `ADS` (Docker Compose stack / Docker Desktop group).
+#
+# Networking (same Docker network — no host ports required for this):
+#   - ads-backend  → postgresdb:5432   (JDBC host is the *service name* `postgresdb`)
+#   - ads-frontend → ads-backend:8080  (nginx proxy_pass uses service name `ads-backend`)
+# Host ports below are for browsers/tools on your machine (curl, Postman, DB clients).
+#
+# From repository root:
+#   docker compose -f ADS/docker-compose.yml up --build
+# From ADS/:
+#   docker compose up --build
+
+name: ADS
+
 services:
-  postgres1:
+  postgresdb:
     image: postgres:16
-    container_name: postgres1
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
-    ports:
-      - "5432:5432"
     volumes:
       - ads_pgdata:/var/lib/postgresql/data
+    ports:
+      # Change to "5433:5432" if another Postgres already uses host 5432.
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-  ads-api:
+  ads-backend:
     build:
-      context: .
+      context: ./ads-backend
       dockerfile: Dockerfile
     depends_on:
-      - postgres1
+      postgresdb:
+        condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres1:5432/postgres
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5432/postgres
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       ADS_SECURITY_JWT_SECRET: change-me-to-a-long-random-secret-change-me-to-a-long-random-secret
+      # Browser hits UI on :8088; API is proxied under same origin but CORS still validates Origin on API calls.
+      ADS_CORS_ALLOWED_ORIGINS: http://localhost:8088,http://127.0.0.1:8088,http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/api/v1/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 120s
+
+  ads-frontend:
+    build:
+      context: ./ads-frontend
+      dockerfile: Dockerfile
+    depends_on:
+      ads-backend:
+        # Wait until Spring answers /api/v1/health; otherwise nginx starts first → 502 on login.
+        condition: service_healthy
+    ports:
+      - "8088:80"
 
 volumes:
   ads_pgdata:
-

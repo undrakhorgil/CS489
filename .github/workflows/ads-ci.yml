@@ -1,4 +1,4 @@
-name: ADS CI
+name: ads-backend & ads-frontend CI
 
 on:
   push:
@@ -21,4 +21,17 @@ jobs:
           java-version: "21"
           cache: maven
       - name: Test (Maven)
-        run: mvn -f ADS/pom.xml -B clean test
+        run: mvn -f ADS/ads-backend/pom.xml -B clean test
+
+  ads-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: ADS/ads-frontend/package-lock.json
+      - name: Install & build (Vite)
+        working-directory: ADS/ads-frontend
+        run: npm ci && npm run build

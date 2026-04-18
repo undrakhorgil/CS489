@@ -1,0 +1,502 @@
+:root {
+  --bg: #0f1419;
+  --surface: #1a222c;
+  --border: #2a3544;
+  --text: #e8eef5;
+  --muted: #9aa8b6;
+  --accent: #3d9cfd;
+  --danger: #f87171;
+  --ok: #4ade80;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
+  background: radial-gradient(1200px 600px at 20% -10%, #1b2a44 0%, var(--bg) 55%);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+a {
+  color: var(--accent);
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.page {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 650;
+}
+
+header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.1rem 1.15rem;
+  backdrop-filter: blur(6px);
+}
+
+.card h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 650;
+}
+
+label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0.65rem 0 0.25rem;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #121a24;
+  color: var(--text);
+}
+
+.booking-panel {
+  grid-column: 1 / -1;
+  max-width: 640px;
+}
+
+.booking-selects {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.cal-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.cal-nav strong {
+  flex: 1;
+  text-align: center;
+  font-weight: 650;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.cal-head {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 2px;
+}
+
+.cal-head > div {
+  padding: 0.2rem 0;
+}
+
+button.cal-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.1rem;
+  min-height: 4.4rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #121a24;
+  color: var(--text);
+  font-size: 0.88rem;
+  padding: 0.2rem 0.15rem 0.25rem;
+}
+
+div.cal-cell.cal-dentist-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.1rem;
+  min-height: 4.4rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #121a24;
+  color: var(--text);
+  font-size: 0.88rem;
+  padding: 0.2rem 0.15rem 0.25rem;
+  box-sizing: border-box;
+}
+
+.cal-daynum {
+  font-weight: 650;
+  line-height: 1.1;
+}
+
+.cal-busy {
+  font-size: 0.62rem;
+  line-height: 1.1;
+  color: #fbbf24;
+  font-weight: 600;
+  text-align: center;
+}
+
+.cal-entries {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1px;
+  width: 100%;
+  max-height: 3.4rem;
+  overflow: hidden;
+  margin-top: 0.05rem;
+  /* Hover uses parent `title`; let pointer hit the cell/button, not inner spans. */
+  pointer-events: none;
+}
+
+.cal-appt-line {
+  font-size: 0.58rem;
+  line-height: 1.15;
+  color: color-mix(in srgb, var(--text) 88%, var(--muted));
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Dentist month calendar — status / past colors */
+.cal-appt-line.cal-appt-booked {
+  color: #4ade80;
+  font-weight: 650;
+}
+
+.cal-appt-line.cal-appt-requested {
+  color: #facc15;
+  font-weight: 650;
+}
+
+.cal-appt-line.cal-appt-pending {
+  color: #fb923c;
+  font-weight: 650;
+}
+
+.cal-appt-line.cal-appt-cancelled {
+  color: #f87171;
+  font-weight: 650;
+}
+
+.cal-appt-line.cal-appt-past {
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.cal-appt-line.cal-appt-neutral {
+  color: color-mix(in srgb, var(--text) 80%, var(--muted));
+}
+
+span.cal-legend {
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+span.cal-legend.cal-appt-booked {
+  color: #4ade80;
+}
+
+span.cal-legend.cal-appt-requested {
+  color: #facc15;
+}
+
+span.cal-legend.cal-appt-pending {
+  color: #fb923c;
+}
+
+span.cal-legend.cal-appt-cancelled {
+  color: #f87171;
+}
+
+span.cal-legend.cal-appt-past {
+  color: #9ca3af;
+}
+
+.cal-appt-more {
+  font-size: 0.55rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.appt-table-wrap {
+  overflow-x: auto;
+  margin-top: 0.35rem;
+}
+
+table.appt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+table.appt-table th,
+table.appt-table td {
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+table.appt-table th {
+  background: color-mix(in srgb, #121a24 70%, transparent);
+  color: var(--muted);
+  font-weight: 600;
+}
+
+td.appt-name-cell {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+td.appt-loc-cell {
+  min-width: 12rem;
+}
+
+.appt-loc-name {
+  font-weight: 600;
+}
+
+.appt-loc-addr {
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+  color: color-mix(in srgb, var(--text) 85%, var(--muted));
+  line-height: 1.35;
+}
+
+.appt-loc-phone {
+  margin-top: 0.15rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+td.appt-actions-cell {
+  vertical-align: middle;
+  min-width: 10rem;
+}
+
+.appt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+button.compact {
+  font-size: 0.72rem;
+  padding: 0.28rem 0.5rem;
+  border-radius: 6px;
+}
+
+.cal-cell.cal-has-busy:not(.cal-selected) {
+  border-color: color-mix(in srgb, #fbbf24 35%, var(--border));
+}
+
+.cal-cell.cal-empty {
+  min-height: 2.35rem;
+  border: none;
+  background: transparent;
+}
+
+.cal-cell.cal-selected {
+  border-color: color-mix(in srgb, var(--accent) 65%, var(--border));
+  background: color-mix(in srgb, var(--accent) 18%, #121a24);
+}
+
+.cal-cell.cal-today:not(.cal-selected) {
+  outline: 1px dashed color-mix(in srgb, var(--muted) 70%, transparent);
+  outline-offset: 1px;
+}
+
+.slot-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+button.slot-btn {
+  font-size: 0.82rem;
+  padding: 0.35rem 0.55rem;
+}
+
+button.slot-btn.slot-picked {
+  border-color: color-mix(in srgb, var(--accent) 65%, var(--border));
+  background: color-mix(in srgb, var(--accent) 22%, #121a24);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+button {
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #223042, #1a2634);
+  color: var(--text);
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.92rem;
+}
+
+button.primary {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 35%, #1a2634), #1a2634);
+}
+
+button.danger {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.badge strong {
+  color: var(--text);
+}
+
+.hint {
+  margin-top: 0.75rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.office-subhead {
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--text);
+}
+
+/* Office manager: folder-style tabs connected to the panel below */
+.office-tab-shell {
+  --office-tab-panel-bg: color-mix(in srgb, var(--surface) 92%, #0c1014 8%);
+  margin-top: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--office-tab-panel-bg);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--border) 40%, transparent);
+}
+
+.office-tablist {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0;
+  margin: 0;
+  padding: 0.4rem 0.5rem 0;
+  list-style: none;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 55%, var(--surface) 45%);
+  border-radius: 9px 9px 0 0;
+}
+
+.office-tab {
+  margin: 0 0.2rem -1px 0;
+  padding: 0.5rem 1rem 0.6rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--muted);
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  position: relative;
+  z-index: 0;
+  box-shadow: none;
+}
+
+.office-tab:hover:not(.office-tab-active) {
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface) 45%, transparent);
+  border-color: color-mix(in srgb, var(--border) 65%, transparent);
+}
+
+.office-tab-active {
+  color: var(--text);
+  font-weight: 650;
+  background: var(--office-tab-panel-bg);
+  border-color: var(--border);
+  border-bottom: 1px solid var(--office-tab-panel-bg);
+  z-index: 2;
+}
+
+.office-tab-active::after {
+  content: "";
+  position: absolute;
+  left: 0.4rem;
+  right: 0.4rem;
+  top: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 85%, transparent), var(--accent));
+}
+
+.office-tab-panel {
+  padding: 0.35rem 1rem 1.1rem;
+  border-radius: 0 0 9px 9px;
+}
+
