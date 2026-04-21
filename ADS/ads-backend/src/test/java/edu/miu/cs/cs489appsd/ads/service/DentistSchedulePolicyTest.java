@@ -2,6 +2,7 @@ package edu.miu.cs.cs489appsd.ads.service;
 
 import edu.miu.cs.cs489appsd.ads.domain.Appointment;
 import edu.miu.cs.cs489appsd.ads.domain.AppointmentStatus;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -11,26 +12,43 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DentistSchedulePolicyTest {
 
-    @Test
-    void sameWeek_detectsIsoWeek() {
-        LocalDateTime mon = LocalDateTime.of(2026, 3, 30, 9, 0);
-        LocalDateTime wed = LocalDateTime.of(2026, 4, 1, 10, 0);
-        assertThat(DentistSchedulePolicy.sameWeek(mon, wed)).isTrue();
+    @Nested
+    class SameWeek {
+        @Test
+        void returnsTrue_whenDatesAreInSameIsoWeek() {
+            // Arrange
+            LocalDateTime mon = LocalDateTime.of(2026, 3, 30, 9, 0);
+            LocalDateTime wed = LocalDateTime.of(2026, 4, 1, 10, 0);
+
+            // Act
+            boolean sameWeek = DentistSchedulePolicy.sameWeek(mon, wed);
+
+            // Assert
+            assertThat(sameWeek).isTrue();
+        }
     }
 
-    @Test
-    void countBookedInSameWeek_respectsFiveLimit() {
-        long dentistId = 1L;
-        LocalDateTime slot = LocalDateTime.of(2026, 4, 2, 14, 0);
-        List<Appointment> list = List.of(
-                ap(1L, dentistId, AppointmentStatus.BOOKED, LocalDateTime.of(2026, 3, 30, 9, 0)),
-                ap(2L, dentistId, AppointmentStatus.BOOKED, LocalDateTime.of(2026, 4, 1, 9, 0)),
-                ap(3L, dentistId, AppointmentStatus.BOOKED, LocalDateTime.of(2026, 4, 2, 9, 0)),
-                ap(4L, dentistId, AppointmentStatus.BOOKED, LocalDateTime.of(2026, 4, 3, 9, 0)),
-                ap(5L, dentistId, AppointmentStatus.BOOKED, LocalDateTime.of(2026, 4, 4, 9, 0))
-        );
-        long count = DentistSchedulePolicy.countBookedInSameWeek(list, dentistId, slot);
-        assertThat(count).isEqualTo(5);
+    @Nested
+    class CountBookedInSameWeek {
+        @Test
+        void returnsBookedCount_forSameWeek() {
+            // Arrange
+            long dentistId = 1L;
+            LocalDateTime slot = LocalDateTime.of(2026, 4, 2, 14, 0);
+            List<Appointment> list = List.of(
+                    ap(1L, dentistId, AppointmentStatus.BOOKED, LocalDateTime.of(2026, 3, 30, 9, 0)),
+                    ap(2L, dentistId, AppointmentStatus.BOOKED, LocalDateTime.of(2026, 4, 1, 9, 0)),
+                    ap(3L, dentistId, AppointmentStatus.BOOKED, LocalDateTime.of(2026, 4, 2, 9, 0)),
+                    ap(4L, dentistId, AppointmentStatus.BOOKED, LocalDateTime.of(2026, 4, 3, 9, 0)),
+                    ap(5L, dentistId, AppointmentStatus.BOOKED, LocalDateTime.of(2026, 4, 4, 9, 0))
+            );
+
+            // Act
+            long count = DentistSchedulePolicy.countBookedInSameWeek(list, dentistId, slot);
+
+            // Assert
+            assertThat(count).isEqualTo(5);
+        }
     }
 
     private static Appointment ap(long id, long dentistId, AppointmentStatus status, LocalDateTime start) {

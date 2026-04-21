@@ -16,17 +16,9 @@
 
 ## Repository layout
 
-- **`ads-backend/`** — Spring Boot REST API (PostgreSQL, JWT security)
-- **`ads-frontend/`** — React SPA (Vite + TypeScript)
-- **`k8s/`** — Kubernetes manifests (Kustomize) for Minikube
-
----
-
-## Presentation flow (all context in one place)
-
-This README is ordered to present the project end-to-end:
-
-**Problem → Requirements → Analysis/Domain Model → Architecture → Database → Implementation → Testing/CI → Deployment**
+- `**ads-backend/`** — Spring Boot REST API (PostgreSQL, JWT security)
+- `**ads-frontend/`** — React SPA (Vite + TypeScript)
+- `**k8s/**` — Kubernetes manifests (Kustomize) for Minikube
 
 ---
 
@@ -49,16 +41,18 @@ Without a dedicated system, staff rely on spreadsheets or ad hoc communication, 
 
 ### Scope
 
-- **In scope**: REST API (`/api/v1/**`), relational persistence, JWT authentication, role-based authorization, React SPA, Docker Compose stack, GitHub Actions CI, unit + integration tests.
+- **In scope**: REST API (`/api/v1/`**), relational persistence, JWT authentication, role-based authorization, React SPA, Docker Compose stack, GitHub Actions CI, unit + integration tests.
 - **Out of scope**: payment processing, multi-tenant SaaS, native mobile apps, full HL7 integration.
 
 ### Stakeholders and roles
 
-| Role | Typical user | System access |
-|------|--------------|--------------|
-| **PATIENT** | Registered patient | Own appointments; booking; cancel/reschedule requests. |
-| **DENTIST** | Provider | Own schedule; confirm/reject; cancel/approve actions on own visits. |
+
+| Role               | Typical user       | System access                                                               |
+| ------------------ | ------------------ | --------------------------------------------------------------------------- |
+| **PATIENT**        | Registered patient | Own appointments; booking; cancel/reschedule requests.                      |
+| **DENTIST**        | Provider           | Own schedule; confirm/reject; cancel/approve actions on own visits.         |
 | **OFFICE_MANAGER** | Front desk / admin | Directory (patients, dentists, surgeries); all appointments; staff booking. |
+
 
 ### Functional requirements (summary)
 
@@ -79,21 +73,23 @@ Without a dedicated system, staff rely on spreadsheets or ad hoc communication, 
 
 Actors: **Patient**, **Dentist**, **Office manager**, **System** (email notifications, validation).
 
-| ID | Use case | Primary actor | Summary |
-|----|----------|---------------|---------|
-| UC-01 | Register surgery | Office manager | Create a surgery site with name, address, phone. |
-| UC-02 | Register dentist | Office manager | Add dentist profile (name, contact, specialization). |
-| UC-03 | Enroll patient | Office manager | Add patient with demographics and mailing address. |
-| UC-04 | Sign in | All | Authenticate; receive JWT for subsequent API calls. |
-| UC-05 | View own appointments | Patient, Dentist | List appointments relevant to the signed-in user. |
-| UC-06 | Request appointment | Patient | Choose dentist, surgery, slot; create REQUESTED visit. |
-| UC-07 | Book confirmed visit | Office manager | Choose patient, dentist, surgery, slot; create BOOKED visit immediately. |
-| UC-08 | View month schedule | Patient, Dentist | Calendar view of busy times (privacy differs by role). |
-| UC-09 | View all appointments (directory) | Office manager | List all appointments; act on rows. |
-| UC-10 | Confirm / reject request | Dentist, Office manager | Move REQUESTED to BOOKED or reject. |
-| UC-11 | Cancel visit / approve cancel | Dentist, Office manager | Cancel flow and patient cancel approval. |
-| UC-12 | Reschedule flow | Patient, Dentist, Office manager | Propose new time; approve or reject. |
-| UC-14 | Health check | Operations | `GET /api/v1/health` for readiness in Docker. |
+
+| ID    | Use case                          | Primary actor                    | Summary                                                                  |
+| ----- | --------------------------------- | -------------------------------- | ------------------------------------------------------------------------ |
+| UC-01 | Register surgery                  | Office manager                   | Create a surgery site with name, address, phone.                         |
+| UC-02 | Register dentist                  | Office manager                   | Add dentist profile (name, contact, specialization).                     |
+| UC-03 | Enroll patient                    | Office manager                   | Add patient with demographics and mailing address.                       |
+| UC-04 | Sign in                           | All                              | Authenticate; receive JWT for subsequent API calls.                      |
+| UC-05 | View own appointments             | Patient, Dentist                 | List appointments relevant to the signed-in user.                        |
+| UC-06 | Request appointment               | Patient                          | Choose dentist, surgery, slot; create REQUESTED visit.                   |
+| UC-07 | Book confirmed visit              | Office manager                   | Choose patient, dentist, surgery, slot; create BOOKED visit immediately. |
+| UC-08 | View month schedule               | Patient, Dentist                 | Calendar view of busy times (privacy differs by role).                   |
+| UC-09 | View all appointments (directory) | Office manager                   | List all appointments; act on rows.                                      |
+| UC-10 | Confirm / reject request          | Dentist, Office manager          | Move REQUESTED to BOOKED or reject.                                      |
+| UC-11 | Cancel visit / approve cancel     | Dentist, Office manager          | Cancel flow and patient cancel approval.                                 |
+| UC-12 | Reschedule flow                   | Patient, Dentist, Office manager | Propose new time; approve or reject.                                     |
+| UC-14 | Health check                      | Operations                       | `GET /api/v1/health` for readiness in Docker.                            |
+
 
 Extensions (cross-cutting): Bean Validation on DTOs, structured errors, CORS configuration.
 
@@ -158,6 +154,8 @@ classDiagram
     Account ..> Patient : optional profile link
 ```
 
+
+
 Enumerations in code (`AppointmentStatus`, `AppointmentRequestChannel`, `Role`) drive valid status transitions and portal behavior.
 
 ---
@@ -190,6 +188,8 @@ flowchart TB
     DOM --> PG
 ```
 
+
+
 ### Physical view (Docker Compose)
 
 ```mermaid
@@ -208,6 +208,8 @@ flowchart LR
     N -->|proxy /api| A
     A --> P
 ```
+
+
 
 ---
 
@@ -280,6 +282,8 @@ erDiagram
     roles ||--o{ users : "role_id"
 ```
 
+
+
 Notes:
 
 - `Account` entity maps to table `users`.
@@ -306,8 +310,8 @@ docker compose up --build
 
 ### URLs (default)
 
-- **Web UI**: http://localhost:8088/
-- **REST API (host)**: http://localhost:8080/ (example: `GET /api/v1/health`)
+- **Web UI**: [http://localhost:8088/](http://localhost:8088/)
+- **REST API (host)**: [http://localhost:8080/](http://localhost:8080/) (example: `GET /api/v1/health`)
 - **Postgres (host)**: `localhost:5432`
 
 ### Notes (why this works reliably)
@@ -343,27 +347,29 @@ More detail: see `DOCKER.md`.
 ## Demo script (presentation-ready)
 
 1. **Start the stack** (Docker Compose quick start above).
-2. **Open the Web UI** at http://localhost:8088/
+2. **Open the Web UI** at [http://localhost:8088/](http://localhost:8088/)
 3. **Login using seeded accounts** (below) and show role-specific behavior:
-   - **Office Manager**: create/register surgeries/dentists/patients.
-   - **Patient**: book/view appointments.
-   - **Dentist**: view schedule and manage appointment lifecycle (confirm/reject/cancel/reschedule).
+  - **Office Manager**: create/register surgeries/dentists/patients.
+  - **Patient**: book/view appointments.
+  - **Dentist**: view schedule and manage appointment lifecycle (confirm/reject/cancel/reschedule).
 4. **Prove the API is running**:
-   - `GET http://localhost:8080/api/v1/health`
+  - `GET http://localhost:8080/api/v1/health`
 5. **(Optional) Show security**:
-   - Login endpoint issues JWT; protected endpoints require `Authorization: Bearer <token>`.
+  - Login endpoint issues JWT; protected endpoints require `Authorization: Bearer <token>`.
 6. **(Optional) Show tests/CI**:
-   - Mention GitHub Actions workflow `.github/workflows/ads-ci.yml`.
+  - Mention GitHub Actions workflow `.github/workflows/ads-ci.yml`.
 
 ---
 
 ## Default login users (seeded)
 
-| Role | Username | Password |
-|------|----------|----------|
-| Office Manager | `manager` | `password` |
-| Dentist | `dentist1` | `password` |
-| Patient | `patient1` | `password` |
+
+| Role           | Username   | Password   |
+| -------------- | ---------- | ---------- |
+| Office Manager | `manager`  | `password` |
+| Dentist        | `dentist1` | `password` |
+| Patient        | `patient1` | `password` |
+
 
 ---
 
@@ -371,20 +377,20 @@ More detail: see `DOCKER.md`.
 
 Use this for faster iteration (hot reload).
 
-### 1) Database
+### Database
 
-Run PostgreSQL so it is reachable at **`localhost:5432`** (credentials in `ads-backend/src/main/resources/application.yml`).
+Run PostgreSQL so it is reachable at `**localhost:5432`** (credentials in `ads-backend/src/main/resources/application.yml`).
 
-### 2) Backend
+### Backend
 
 ```bash
 cd ADS/ads-backend
 mvn spring-boot:run
 ```
 
-API base URL: **http://localhost:8080**
+API base URL: **[http://localhost:8080](http://localhost:8080)**
 
-### 3) Frontend
+### Frontend
 
 ```bash
 cd ADS/ads-frontend
@@ -392,7 +398,7 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:5173/** (Vite proxies `/api` to the backend; see `vite.config.ts`).
+Open **[http://localhost:5173/](http://localhost:5173/)** (Vite proxies `/api` to the backend; see `vite.config.ts`).
 
 ---
 
@@ -453,7 +459,7 @@ kubectl delete -k ADS/k8s
 
 ---
 
-## 8) Testing & CI/CD
+## Testing & CI/CD
 
 - Backend tests:
 
