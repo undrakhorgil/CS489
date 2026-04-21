@@ -1,13 +1,10 @@
 package edu.miu.cs.cs489appsd.ads.api;
 
-import edu.miu.cs.cs489appsd.ads.domain.Bill;
 import edu.miu.cs.cs489appsd.ads.service.AppointmentService;
-import edu.miu.cs.cs489appsd.ads.service.BillService;
 import edu.miu.cs.cs489appsd.ads.service.RegistrationService;
 import edu.miu.cs.cs489appsd.ads.api.dto.AppointmentDetailResponse;
 import edu.miu.cs.cs489appsd.ads.api.dto.AppointmentRequestDto;
 import edu.miu.cs.cs489appsd.ads.api.dto.AvailableSlotResponse;
-import edu.miu.cs.cs489appsd.ads.api.dto.BillRequest;
 import edu.miu.cs.cs489appsd.ads.api.dto.DayScheduleResponse;
 import edu.miu.cs.cs489appsd.ads.api.dto.DentistRequest;
 import edu.miu.cs.cs489appsd.ads.api.dto.DentistResponse;
@@ -36,14 +33,11 @@ import java.util.List;
 public class OfficeController {
 
     private final RegistrationService registrationService;
-    private final BillService billService;
     private final AppointmentService appointmentService;
 
     public OfficeController(RegistrationService registrationService,
-                            BillService billService,
                             AppointmentService appointmentService) {
         this.registrationService = registrationService;
-        this.billService = billService;
         this.appointmentService = appointmentService;
     }
 
@@ -128,11 +122,6 @@ public class OfficeController {
     @PostMapping("/patients")
     public PatientResponse enrollPatient(@Valid @RequestBody PatientRequest request) {
         return registrationService.enrollPatient(request);
-    }
-
-    @PostMapping("/bills")
-    public Bill recordBill(@Valid @RequestBody BillRequest request) {
-        return billService.recordBill(request);
     }
 
     @PostMapping("/appointments/{appointmentId}/book")

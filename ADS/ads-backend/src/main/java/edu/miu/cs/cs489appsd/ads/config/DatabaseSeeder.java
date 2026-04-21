@@ -6,13 +6,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
  * Creates {@code roles}, lab sample data (dentists, patients, addresses, surgeries,
- * appointments, bills), and default login users when the database is empty.
+ * appointments), and default login users when the database is empty.
  */
 @Service
 public class DatabaseSeeder {
@@ -22,7 +21,6 @@ public class DatabaseSeeder {
     private final DentistRepository dentistRepository;
     private final PatientRepository patientRepository;
     private final AppointmentRepository appointmentRepository;
-    private final BillRepository billRepository;
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -32,7 +30,6 @@ public class DatabaseSeeder {
             DentistRepository dentistRepository,
             PatientRepository patientRepository,
             AppointmentRepository appointmentRepository,
-            BillRepository billRepository,
             AccountRepository accountRepository,
             PasswordEncoder passwordEncoder) {
         this.roleEntityRepository = roleEntityRepository;
@@ -40,7 +37,6 @@ public class DatabaseSeeder {
         this.dentistRepository = dentistRepository;
         this.patientRepository = patientRepository;
         this.appointmentRepository = appointmentRepository;
-        this.billRepository = billRepository;
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -108,15 +104,6 @@ public class DatabaseSeeder {
                 AppointmentStatus.BOOKED, AppointmentRequestChannel.ONLINE);
         saveAppt(pAva, dSophia, sOttumwa, LocalDateTime.of(2026, 4, 15, 14, 0), null,
                 AppointmentStatus.BOOKED, AppointmentRequestChannel.PHONE);
-
-        billRepository.save(bill(pEthan.getPatientId(), new BigDecimal("95.00"),
-                LocalDate.of(2026, 3, 20), true));
-        billRepository.save(bill(pAva.getPatientId(), new BigDecimal("120.00"),
-                LocalDate.of(2026, 3, 25), true));
-        billRepository.save(bill(pMason.getPatientId(), new BigDecimal("250.00"),
-                LocalDate.of(2026, 3, 15), false));
-        billRepository.save(bill(pIsla.getPatientId(), new BigDecimal("80.00"),
-                LocalDate.of(2026, 3, 30), true));
     }
 
     private void saveAppt(Patient p, Dentist d, Surgery s, LocalDateTime start,
@@ -130,15 +117,6 @@ public class DatabaseSeeder {
         a.setStatus(status);
         a.setChannel(ch);
         appointmentRepository.save(a);
-    }
-
-    private static Bill bill(Long patientId, BigDecimal amt, LocalDate due, boolean paid) {
-        Bill b = new Bill();
-        b.setPatientId(patientId);
-        b.setAmount(amt);
-        b.setDueDate(due);
-        b.setPaid(paid);
-        return b;
     }
 
     private void seedDefaultAccountsIfNeeded() {

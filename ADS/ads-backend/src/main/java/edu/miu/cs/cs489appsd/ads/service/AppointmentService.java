@@ -8,7 +8,6 @@ import edu.miu.cs.cs489appsd.ads.domain.Surgery;
 import edu.miu.cs.cs489appsd.ads.exception.BusinessRuleException;
 import edu.miu.cs.cs489appsd.ads.exception.NotFoundException;
 import edu.miu.cs.cs489appsd.ads.repository.AppointmentRepository;
-import edu.miu.cs.cs489appsd.ads.repository.BillRepository;
 import edu.miu.cs.cs489appsd.ads.repository.DentistRepository;
 import edu.miu.cs.cs489appsd.ads.repository.PatientRepository;
 import edu.miu.cs.cs489appsd.ads.repository.SurgeryRepository;
@@ -45,28 +44,22 @@ public class AppointmentService {
     private final DentistRepository dentistRepository;
     private final PatientRepository patientRepository;
     private final SurgeryRepository surgeryRepository;
-    private final BillRepository billRepository;
     private final EmailNotificationService emailNotificationService;
 
     public AppointmentService(AppointmentRepository appointmentRepository,
                               DentistRepository dentistRepository,
                               PatientRepository patientRepository,
                               SurgeryRepository surgeryRepository,
-                              BillRepository billRepository,
                               EmailNotificationService emailNotificationService) {
         this.appointmentRepository = appointmentRepository;
         this.dentistRepository = dentistRepository;
         this.patientRepository = patientRepository;
         this.surgeryRepository = surgeryRepository;
-        this.billRepository = billRepository;
         this.emailNotificationService = emailNotificationService;
     }
 
     public AppointmentDetailResponse requestAppointment(long patientId, AppointmentRequestDto dto) {
         ensurePatientExists(patientId);
-        if (billRepository.existsByPatientIdAndPaidFalse(patientId)) {
-            throw new BusinessRuleException("Cannot request a new appointment while an unpaid bill exists.");
-        }
         ensureDentistExists(dto.dentistId());
         ensureSurgeryExists(dto.surgeryId());
 
@@ -87,9 +80,6 @@ public class AppointmentService {
      */
     public AppointmentDetailResponse officeBookImmediately(long patientId, AppointmentRequestDto dto) {
         ensurePatientExists(patientId);
-        if (billRepository.existsByPatientIdAndPaidFalse(patientId)) {
-            throw new BusinessRuleException("Cannot book while an unpaid bill exists.");
-        }
         ensureDentistExists(dto.dentistId());
         ensureSurgeryExists(dto.surgeryId());
         LocalDateTime startAt = dto.startAt();

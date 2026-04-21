@@ -1,10 +1,19 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
-    username: postgres
-    password: postgres
+    url: jdbc:h2:mem:ads_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
   jpa:
     open-in-view: false
     hibernate:
       ddl-auto: create-drop
-    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+ads:
+  security:
+    jwt:
+      secret: test-secret-test-secret-test-secret-test-secret-test-secret
+      expires-in-seconds: 3600
